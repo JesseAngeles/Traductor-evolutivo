@@ -13,6 +13,9 @@ class evolutiveTranslate:
     def saveCSV(self):
         self.df.to_csv('resources/dictionary.csv', index=False)
 
+    def getHeaders(self):
+        return list(self.df.columns.values)
+
     def findTranslate(self, word):
         translation_word = self.df[self.df.iloc[:, 0] == word]
 
@@ -25,8 +28,11 @@ class evolutiveTranslate:
         self.df.loc[len(self.df)] = [word, translate]
 
     def getDistances(self, word):
-        new_df = self.df
+        new_df = self.df.copy()
 
         new_df['distance'] = new_df['español'].apply(lambda x: self.levenshtein.distance(word, x))
 
         return new_df.sort_values(by='distance', ascending=True)
+
+    def getRegister(self, index):
+        return self.df.iloc[index]
