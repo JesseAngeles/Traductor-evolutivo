@@ -62,6 +62,9 @@ class GUI:
             self.entryEnglish.config(state="disabled")
             self.buttonCreate.place_forget()
         else:
+            df = self.et.getDistances(word)
+            print(df)
+
             self.entryEnglish.config(state="normal")
             self.buttonCreate.place(x=267, y = 110)
 

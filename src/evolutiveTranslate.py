@@ -1,8 +1,11 @@
 import pandas as pd
 
+from Levenshtein import Levenshtein
+
 class evolutiveTranslate:
     def __init__(self):
         self.loadCSV()
+        self.levenshtein = Levenshtein()
 
     def loadCSV(self):
         self.df = pd.read_csv('resources/dictionary.csv')
@@ -20,3 +23,10 @@ class evolutiveTranslate:
     
     def insertWord(self, word, translate):
         self.df.loc[len(self.df)] = [word, translate]
+
+    def getDistances(self, word):
+        new_df = self.df
+
+        new_df['distance'] = new_df['español'].apply(lambda x: self.levenshtein.distance(word, x))
+
+        return new_df.sort_values(by='distance', ascending=True)
