@@ -41,12 +41,12 @@ class GUI:
         self.labelToLan.place(x=460, y = 55)
 
         #textboxes
-        self.entryfromLanguage = Text(self.tab1, width=30, height=5)
-        self.entryfromLanguage.place(x=10, y = 95)
+        self.entryFromLan = Text(self.tab1, width=30, height=5)
+        self.entryFromLan.place(x=10, y = 95)
 
-        self.entryEnglish = Text(self.tab1, width=30, height=5)
-        self.entryEnglish.place(x=360, y=95)
-        self.entryEnglish.config(state="disabled")
+        self.entryToLan = Text(self.tab1, width=30, height=5)
+        self.entryToLan.place(x=360, y=95)
+        self.entryToLan.config(state="disabled")
 
         # imagenes
         image = Image.open("resources/icons/swap.png")
@@ -74,34 +74,50 @@ class GUI:
 
         self.labelfromLanguage.config(text=self.fromLanguage)
         self.labelToLan.config(text=self.toLanguage)
+        
+        tmp = self.entryFromLan.get("1.0", END).strip()
+
+        if tmp and self.entryToLan.get("1.0", END).strip():
+            self.entryFromLan.delete("1.0", END)
+            self.entryFromLan.insert(END, self.entryToLan.get("1.0", END).strip())
+
+            self.entryToLan.config(state="normal")
+            self.entryToLan.delete("1.0", END)
+            self.entryToLan.insert(END, tmp)
+            self.entryToLan.config(state="disabled")
+        elif tmp and not self.entryToLan.get("1.0", END).strip():
+            self.entryFromLan.delete("1.0", END)
+
+        for button in self.optionButtons:
+            button.destroy()
 
     def translate(self):
-        self.entryEnglish.config(state="normal")
-        self.entryEnglish.delete("1.0", END)
-        self.entryEnglish.config(state="disabled")
+        self.entryToLan.config(state="normal")
+        self.entryToLan.delete("1.0", END)
+        self.entryToLan.config(state="disabled")
             
 
-        word = self.entryfromLanguage.get("1.0", END).strip()     
+        word = self.entryFromLan.get("1.0", END).strip()     
         translate_word = self.et.findTranslate(word)
         if(translate_word):
             
-            self.entryEnglish.config(state="normal")
-            self.entryEnglish.insert(END, translate_word)
-            self.entryEnglish.config(state="disabled")
+            self.entryToLan.config(state="normal")
+            self.entryToLan.insert(END, translate_word)
+            self.entryToLan.config(state="disabled")
             self.buttonCreate.place_forget()
         else:
             df = self.et.getDistances(word)
             self.printOptions(df)
 
-            self.entryEnglish.config(state="normal")
+            self.entryToLan.config(state="normal")
             self.buttonCreate.place(x=267, y = 110)
 
     def addWord(self):
-        word = self.entryfromLanguage.get("1.0", END).strip()
-        translate = self.entryEnglish.get("1.0", END).strip()
+        word = self.entryFromLan.get("1.0", END).strip()
+        translate = self.entryToLan.get("1.0", END).strip()
         self.et.insertWord(word, translate)
 
-        self.entryEnglish.config(state="disabled")
+        self.entryToLan.config(state="disabled")
         
         self.buttonCreate.place_forget()
         self.labelOptions.place_forget()
@@ -126,13 +142,13 @@ class GUI:
     def onOptionSelect(self, index):
         register = self.et.getRegister(index)
    
-        self.entryfromLanguage.delete("1.0", END)
-        self.entryfromLanguage.insert(END, register['español'])
+        self.entryFromLan.delete("1.0", END)
+        self.entryFromLan.insert(END, register['español'])
 
-        self.entryEnglish.config(state="normal")
-        self.entryEnglish.delete("1.0", END)
-        self.entryEnglish.insert(END, register['english'])
-        self.entryEnglish.config(state="disabled")
+        self.entryToLan.config(state="normal")
+        self.entryToLan.delete("1.0", END)
+        self.entryToLan.insert(END, register['english'])
+        self.entryToLan.config(state="disabled")
 
         self.labelOptions.place_forget()
         self.buttonCreate.place_forget()
