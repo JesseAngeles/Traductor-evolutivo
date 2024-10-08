@@ -8,17 +8,19 @@ class evolutiveTranslate:
         self.levenshtein = Levenshtein()
 
     def loadCSV(self):
-        self.df = pd.read_csv('resources/dictionary.csv')
+        self.dictionary = pd.read_csv('resources/dictionary.csv')
+        self.recommendation = pd.read_csv('resources/recommendation.csv')
 
     def saveCSV(self):
-        self.df.to_csv('resources/dictionary.csv', index=False)
+        self.dictionary.to_csv('resources/dictionary.csv', index=False)
+        self.recommendation.to_csv('resources/recommendation.csv', index=False)
 
     def getHeaders(self):
-        return list(self.df.columns.values)
+        return list(self.dictionary.columns.values)
 
     def findLanguage(self, word, fromLanguage, toLanguage):
-        word_from = self.df[self.df[fromLanguage] == word]
-        word_to = self.df[self.df[toLanguage] == word]
+        word_from = self.dictionary[self.dictionary[fromLanguage] == word]
+        word_to = self.dictionary[self.dictionary[toLanguage] == word]
 
         if not word_from.empty:
             return fromLanguage
@@ -28,7 +30,7 @@ class evolutiveTranslate:
             return False
 
     def findTranslate(self, word, fromLanguage, toLanguage):
-        translation_df = self.df[self.df[fromLanguage] == word]
+        translation_df = self.dictionary[self.dictionary[fromLanguage] == word]
 
         if not translation_df.empty:
             return translation_df.iloc[0][toLanguage]
@@ -36,14 +38,30 @@ class evolutiveTranslate:
         return False
     
     def insertWord(self, word, translate):
-        self.df.loc[len(self.df)] = [word, translate]
+        self.dictionary.loc[len(self.dictionary)] = [word, translate]
 
     def getDistances(self, word, fromLanguage):
-        new_df = self.df.copy()
+        new_df = self.dictionary.copy()
 
         new_df['distance'] = new_df[fromLanguage].apply(lambda x: self.levenshtein.distance(word, x))
 
-        return new_df.sort_values(by='distance', ascending=True)
+        new_df = new_df.sort_values(by='distance', ascending=True).head()
+        for index, row in new_df.iterrows():
+            match = self.recommendation[(self.recommendation['word'] == word) & (self.recommendation['translate'] == row[fromLanguage])]
+            if match.empty:
+                new_row = {"word": word, "translate": row[fromLanguage], "counter":0}  
+                self.recommendation = pd.concat([self.recommendation, pd.DataFrame([new_row])], ignore_index=True)
+
+        return self.recommendation.sort_values(by='counter', ascending=False)
+
+    def increaseCounter(self, word, translate):
+        # Encuentra la coincidencia en el DataFrame 'recommendation'
+        match = self.recommendation[
+            (self.recommendation['word'] == word) & 
+            (self.recommendation['translate'] == translate)]
+        
+        if not match.empty:  
+            self.recommendation.at[match.index[0], 'counter'] += 1
 
     def getRegister(self, index):
-        return self.df.iloc[index]
+        return self.dictionary.iloc[index]

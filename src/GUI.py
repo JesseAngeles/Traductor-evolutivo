@@ -141,19 +141,25 @@ class GUI:
         self.optionButtons = []
 
         y = 240
-        for index, row in df.head().iterrows():
-            optionButton = ttk.Button(self.tab1, text=row[self.fromLanguage], command=lambda idx=index: self.onOptionSelect(idx))
+        for index, row in df.iterrows():            
+            text = row["translate"] + " (" + str(row["counter"]) + ")"
+            optionButton = ttk.Button(self.tab1, text=text, command=lambda idx=index: self.onOptionSelect(idx, row['word']))
             optionButton.place(x=30, y=y)
             
             self.optionButtons.append(optionButton)
             
             y += 40  
 
-    def onOptionSelect(self, index):
-        register = self.et.getRegister(index)
+    def onOptionSelect(self, index, word):
+        
 
+        register = self.et.getRegister(index)
+        
         self.setEntryFromLan(register[self.fromLanguage])
         self.setEntryToLan(register[self.toLanguage])
+
+        # Aumento de recomendaciones
+        self.et.increaseCounter(word, register[self.fromLanguage])
 
         # Eliminación preventiva
         self.labelOptions.place_forget()
