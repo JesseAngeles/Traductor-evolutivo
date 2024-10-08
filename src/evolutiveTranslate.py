@@ -16,21 +16,32 @@ class evolutiveTranslate:
     def getHeaders(self):
         return list(self.df.columns.values)
 
-    def findTranslate(self, word):
-        translation_word = self.df[self.df.iloc[:, 0] == word]
+    def findLanguage(self, word, fromLanguage, toLanguage):
+        word_from = self.df[self.df[fromLanguage] == word]
+        word_to = self.df[self.df[toLanguage] == word]
 
-        if not translation_word.empty:
-            return translation_word.iloc[0, 1]
-        
+        if not word_from.empty:
+            return fromLanguage
+        elif not word_to.empty:
+            return toLanguage
+        else:
+            return False
+
+    def findTranslate(self, word, fromLanguage, toLanguage):
+        translation_df = self.df[self.df[fromLanguage] == word]
+
+        if not translation_df.empty:
+            return translation_df.iloc[0][toLanguage]
+
         return False
     
     def insertWord(self, word, translate):
         self.df.loc[len(self.df)] = [word, translate]
 
-    def getDistances(self, word):
+    def getDistances(self, word, fromLanguage):
         new_df = self.df.copy()
 
-        new_df['distance'] = new_df['español'].apply(lambda x: self.levenshtein.distance(word, x))
+        new_df['distance'] = new_df[fromLanguage].apply(lambda x: self.levenshtein.distance(word, x))
 
         return new_df.sort_values(by='distance', ascending=True)
 

@@ -56,61 +56,72 @@ class GUI:
         # buttons
         self.buttonSwitch = ttk.Button(self.tab1, image=self.imageSwitch, command=self.switchLan)
         self.buttonSwitch.place(x = 295, y = 60)
-        
+
         self.buttonTranslate = ttk.Button(self.tab1, text="Translate", command=self.translate)
         self.buttonTranslate.place(x = 267, y = 110)
 
         self.buttonCreate = ttk.Button(self.tab1, text="Add word", command=self.addWord)
         self.buttonCreate.place_forget()
 
+        self.optionButtons = []
+
     def on_close(self):
         self.et.saveCSV()
         self.root.destroy()
 
     def switchLan(self):
-        tmp = self.fromLanguage
-        self.fromLanguage = self.toLanguage
-        self.toLanguage = tmp
+        # Cambio de lenguage de entrada
+        self.fromLanguage, self.toLanguage = self.toLanguage, self.fromLanguage
 
+        # Cambio en labels
         self.labelfromLanguage.config(text=self.fromLanguage)
         self.labelToLan.config(text=self.toLanguage)
         
-        tmp = self.entryFromLan.get("1.0", END).strip()
+        translate = self.entryToLan.get("1.0", END).strip()
+        if translate:
+            self.setEntryFromLan(translate)
+            self.translate()
 
-        if tmp and self.entryToLan.get("1.0", END).strip():
-            self.entryFromLan.delete("1.0", END)
-            self.entryFromLan.insert(END, self.entryToLan.get("1.0", END).strip())
-
-            self.entryToLan.config(state="normal")
-            self.entryToLan.delete("1.0", END)
-            self.entryToLan.insert(END, tmp)
-            self.entryToLan.config(state="disabled")
-        elif tmp and not self.entryToLan.get("1.0", END).strip():
-            self.entryFromLan.delete("1.0", END)
-
+        # Eliminación preventiva
+        self.buttonCreate.place_forget()
+        self.labelOptions.place_forget()
         for button in self.optionButtons:
             button.destroy()
 
     def translate(self):
-        self.entryToLan.config(state="normal")
-        self.entryToLan.delete("1.0", END)
-        self.entryToLan.config(state="disabled")
-            
+        # Bloqueo
+        self.setEntryToLan("")
 
-        word = self.entryFromLan.get("1.0", END).strip()     
-        translate_word = self.et.findTranslate(word)
-        if(translate_word):
-            
-            self.entryToLan.config(state="normal")
-            self.entryToLan.insert(END, translate_word)
-            self.entryToLan.config(state="disabled")
+        # Traduccion
+        word = self.entryFromLan.get("1.0", END).strip()  
+        translate_word = self.et.findTranslate(word, self.fromLanguage, self.toLanguage)
+
+        # Si se encontro la traduccion
+        if translate_word:
+            self.setEntryToLan(translate_word)
+
             self.buttonCreate.place_forget()
-        else:
-            df = self.et.getDistances(word)
-            self.printOptions(df)
+            self.labelOptions.place_forget()
+            for button in self.optionButtons:
+                button.destroy()
 
-            self.entryToLan.config(state="normal")
-            self.buttonCreate.place(x=267, y = 110)
+        else:
+            lan_detected = self.et.findLanguage(word, self.fromLanguage, self.toLanguage)
+
+            # Si la palabra pertenence a otro lenguage 
+            if lan_detected:
+                self.switchLan()
+                translate_word = self.et.findTranslate(word, self.fromLanguage, self.toLanguage)
+                self.setEntryFromLan(word)
+                self.setEntryToLan(translate_word)
+
+            # Si la palabra no existe
+            else:
+                df = self.et.getDistances(word, self.fromLanguage)
+                self.printOptions(df)
+
+                self.entryToLan.config(state="normal")
+                self.buttonCreate.place(x=267, y = 150)
 
     def addWord(self):
         word = self.entryFromLan.get("1.0", END).strip()
@@ -121,7 +132,6 @@ class GUI:
         
         self.buttonCreate.place_forget()
         self.labelOptions.place_forget()
-
         for button in self.optionButtons:
             button.destroy()
 
@@ -132,7 +142,7 @@ class GUI:
 
         y = 240
         for index, row in df.head().iterrows():
-            optionButton = ttk.Button(self.tab1, text=row['español'], command=lambda idx=index: self.onOptionSelect(idx))
+            optionButton = ttk.Button(self.tab1, text=row[self.fromLanguage], command=lambda idx=index: self.onOptionSelect(idx))
             optionButton.place(x=30, y=y)
             
             self.optionButtons.append(optionButton)
@@ -141,18 +151,22 @@ class GUI:
 
     def onOptionSelect(self, index):
         register = self.et.getRegister(index)
-   
-        self.entryFromLan.delete("1.0", END)
-        self.entryFromLan.insert(END, register['español'])
 
-        self.entryToLan.config(state="normal")
-        self.entryToLan.delete("1.0", END)
-        self.entryToLan.insert(END, register['english'])
-        self.entryToLan.config(state="disabled")
+        self.setEntryFromLan(register[self.fromLanguage])
+        self.setEntryToLan(register[self.toLanguage])
 
+        # Eliminación preventiva
         self.labelOptions.place_forget()
         self.buttonCreate.place_forget()
-
         for button in self.optionButtons:
             button.destroy()
         
+    def setEntryFromLan(self, content):
+        self.entryFromLan.delete("1.0", END)
+        self.entryFromLan.insert(END, content)
+
+    def setEntryToLan(self, content):
+        self.entryToLan.config(state="normal")
+        self.entryToLan.delete("1.0", END)
+        self.entryToLan.insert(END, content)
+        self.entryToLan.config(state="disabled")
