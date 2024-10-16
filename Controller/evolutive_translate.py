@@ -1,4 +1,5 @@
 from Models.word_model import WordModel
+from Controller.levenshtein import Levenshtein 
 
 class EvolutiveTranslate():
     def __init__(self, db):
@@ -7,6 +8,7 @@ class EvolutiveTranslate():
         self.categories = list(self.db['categories'].find())
         self.words = list(self.db['words'].find())
 
+        self.levenshtein = Levenshtein
         
     def get_languages(self):
         languages_data = self.db['languages'].find()
@@ -24,9 +26,7 @@ class EvolutiveTranslate():
         finded = False
         for translates in self.words:
             for object_id, translation in translates['translates'].items():
-                # print(translate)
                 if str(from_language['_id']) == str(object_id) and str(translation) == str(content):
-                    # print(content)
                     finded = True
                     break
             if finded:
@@ -36,6 +36,7 @@ class EvolutiveTranslate():
                         
         return False
     
+    # TODO 
     def add_translate(self, from_lan, to_lan, content, translate):
         from_language = self.find_lan_by_name(from_lan)
         to_language = self.find_lan_by_name(to_lan)
@@ -45,11 +46,26 @@ class EvolutiveTranslate():
                           str(to_language['_id']) : translate}
             word = WordModel([], translates)
             self.db['words'].insert_one(word.to_dict())
-            return True
-        else:
-            return False
-        
-        
+            
+            
+
+    def get_similar_words(self, word):
+        words = []
+        for content in self.words:
+            for _, translate in content['translates'].items():
+                word = (translate, self.levenshtein.distance(self, word, translate))
+                words.append(word)
+                
+        return sorted(words, key=lambda x: x[1])
+
+    def find_lan_by_word(self, word):
+        for translate in self.words:
+            for object_id, content in translate['translates'].items():
+                if word == content:
+                    for lan in self.languages:
+                        if str(lan['_id']) == object_id:
+                            return lan['language']
+
     def find_lan_by_name(self, name):
         for lan in self.languages:
             if lan['language'] == name:
