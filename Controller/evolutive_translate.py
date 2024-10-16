@@ -14,7 +14,6 @@ class EvolutiveTranslate():
 
         return languages_list 
     
-    #todo 
     def find_translate(self, from_lan, to_lan, content):
         if from_lan == to_lan: return False
 
@@ -22,17 +21,18 @@ class EvolutiveTranslate():
         to_language = self.find_lan_by_name(to_lan)
 
         if not from_language or not to_language: return False 
-
         finded = False
         for translates in self.words:
-            for translate in translates['translates']:
-                if str(from_language['_id']) == str(translate[0]) and str(translate[1]) == str(content):
+            for object_id, translation in translates['translates'].items():
+                # print(translate)
+                if str(from_language['_id']) == str(object_id) and str(translation) == str(content):
+                    # print(content)
                     finded = True
                     break
             if finded:
-                for translate in translates['translates']:
-                    if str(to_language['_id']) == str(translate[0]): 
-                        return translate[1]
+                for object_id, translation in translates['translates'].items():
+                    if str(to_language['_id']) == str(object_id): 
+                        return translation
                         
         return False
     
