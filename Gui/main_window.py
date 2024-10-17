@@ -116,6 +116,18 @@ class MainWindow:
         self.label_options.place(x=10, y=200)
         words = self.evolutive_translate.get_similar_words(content)
 
+        # Si la palabra existe unicamente en otro idioma
+        if words[0][1] == 0 and words[1][1] != 0:
+            language = self.evolutive_translate.find_lan_by_word(words[0][0])
+            self.combo_to_lan.set(self.combo_from_lan.get())
+            self.combo_from_lan.set(language)
+            self.translate()
+            self.label_options.place_forget()
+            for button in self.buttons_recommendation:
+                button.destroy()
+            
+            return
+            
         i = 240
         for word in words:
             # Usar lambda para posponer la ejecución del comando hasta que el botón sea presionado

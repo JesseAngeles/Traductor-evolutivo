@@ -36,7 +36,6 @@ class EvolutiveTranslate():
                         
         return False
     
-    # TODO 
     def add_translate(self, from_lan, to_lan, content, translate):
         from_language = self.find_lan_by_name(from_lan)
         to_language = self.find_lan_by_name(to_lan)
@@ -46,17 +45,17 @@ class EvolutiveTranslate():
                           str(to_language['_id']) : translate}
             word = WordModel([], translates)
             self.db['words'].insert_one(word.to_dict())
-            
+            self.words = list(self.db['words'].find())
             
 
     def get_similar_words(self, word):
         words = []
         for content in self.words:
             for _, translate in content['translates'].items():
-                word = (translate, self.levenshtein.distance(self, word, translate))
-                words.append(word)
-                
-        return sorted(words, key=lambda x: x[1])
+                new_word = (translate, self.levenshtein.distance(self, word, translate))
+                words.append(new_word)
+            
+        return sorted(words, key=lambda x: x[1])[0:5]
 
     def find_lan_by_word(self, word):
         for translate in self.words:
