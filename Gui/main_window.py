@@ -30,6 +30,9 @@ class MainWindow:
         self.label_options = ttk.Label(self.tab1, text="Similar options", font=("Arial", 16))
         self.label_options.place_forget()
 
+        self.label_options.bind("<Enter>", self.show_hover_message)
+        self.label_options.bind("<Leave>", self.hide_hover_message)
+
         # Combobox
         self.combo_from_lan = ttk.Combobox(self.tab1, font=("Arial", 12))
         self.combo_from_lan.place(x= 50, y = 55)
@@ -58,6 +61,26 @@ class MainWindow:
         self.button_add_translate.place_forget()
     
         self.buttons_recommendation = []
+    
+        self.popup = None
+    
+    # Efecto hover
+    def show_hover_message(self, event):
+        # Crear un Toplevel que actúa como un popup
+        if not self.popup:
+            self.popup = tk.Toplevel(self.root)
+            self.popup.wm_overrideredirect(True)  # Quitar bordes
+            self.popup.geometry(f"+{event.x_root+10}+{event.y_root+10}")  # Posición del popup
+
+            # Crear el contenido del popup
+            label = tk.Label(self.popup, text="Palabra (Distancia de Levenshtein, Frecuencia de error)")
+            label.pack()
+
+    def hide_hover_message(self, event):
+        # Destruir el popup cuando el mouse salga del botón
+        if self.popup:
+            self.popup.destroy()
+            self.popup = None
     
     # Llenar las opciones de lenguage
     def set_languages(self):
@@ -131,13 +154,15 @@ class MainWindow:
         i = 240
         for word in words:
             # Usar lambda para posponer la ejecución del comando hasta que el botón sea presionado
-            button = ttk.Button(self.tab1, text=f"{word[0]}({word[1]})", command=lambda w=word[0]: self.change_option(w))
+            button = ttk.Button(self.tab1, text=f"{word[0]} ({word[1]}, {word[2]})", command=lambda w=word[0]: self.change_option(content, w))
             button.place(x=10, y=i)
             i += 40
             self.buttons_recommendation.append(button)
 
-    def change_option(self, word):
-        language = self.evolutive_translate.find_lan_by_word(word)
+    def change_option(self, word, translate):
+        self.evolutive_translate.update_frecuency_errors(word, translate)
+        
+        language = self.evolutive_translate.find_lan_by_word(translate)
         
         if language == self.combo_to_lan.get():
             self.switch_lan()
@@ -147,7 +172,7 @@ class MainWindow:
             button.destroy()
         
         self.combo_from_lan.set(language)
-        self.set_entry_from_lan(word)
+        self.set_entry_from_lan(translate)
         self.translate()
         
         
