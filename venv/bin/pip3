@@ -1,5 +1,5 @@
 #!/bin/sh
-'''exec' "/home/rediax/Documentos/Escuela/5 Semestre/Procesamiento de lenguage natural/Traductor evolutivo/venv/bin/python3" "$0" "$@"
+'''exec' "/home/rediax/Documentos/Proyectos/tmp traductor/venv/bin/python" "$0" "$@"
 ' '''
 # -*- coding: utf-8 -*-
 import re
