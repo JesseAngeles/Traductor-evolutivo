@@ -6,6 +6,7 @@ def main():
     # Conexion con la base de datos
     db = get_db()
     
+    
     # Iniciar ventana tkinter
     root = tk.Tk()
     app = MainWindow(root, db)
