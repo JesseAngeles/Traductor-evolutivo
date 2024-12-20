@@ -1,14 +1,18 @@
 from Models.word_model import WordModel
 from Models.frecuency_error_model import FrecuencyErrorModel
 
+
 from Services.frecuency_error_service import FrecuencyErrorService
+from Services.struct_service import StructService
 from Controller.levenshtein import Levenshtein 
+
 
 class EvolutiveTranslate():
     def __init__(self, db):
         self.db = db
         
         self.s_frecuency_errors = FrecuencyErrorService(db)
+        self.s_struct = StructService(db)
         
         self.languages = list(self.db['languages'].find())
         self.categories = list(self.db['categories'].find())
@@ -41,6 +45,50 @@ class EvolutiveTranslate():
                 
         return False
     
+    def find_multiple_translate(self, from_lan, to_lan, content):
+        if from_lan == to_lan: 
+            return False
+        from_language = self.find_lan_by_name(from_lan)
+        to_language = self.find_lan_by_name(to_lan)
+
+        if not from_language or not to_language: 
+            return False 
+        
+        struct_from = list()
+        struct_to = list()
+        
+        translate = list()
+        
+        # Obtener la estructura
+        for new_word in content:
+            for word in self.words:
+                for lan in word['translates']:
+                    if word['translates'][lan] == new_word:
+                        struct_from.append(word['categories'][0])
+                        translate.append([word['translates'][str(to_language['_id'])], word['categories'][0]])
+                        break
+                  
+        # Buscar la estructura en structs
+        for struct in self.s_struct.get_struct():
+            if struct['language_from'] == from_language:
+                if struct['struct_from'] == struct_from:
+                    struct_to = struct['struct_to']
+     
+        if struct_to:
+            # Crear un índice del orden en struct_to basado en _id
+            order_map = {item['_id']: index for index, item in enumerate(struct_to)}
+            
+            # Ordenar translate basado en el orden de los _id en struct_to
+            translate = sorted(translate, key=lambda x: order_map.get(x[1]['_id'], float('inf')))
+
+        return_word = ""
+        
+        for word in translate:
+            return_word += word[0] + " "
+        
+        return return_word     
+        
+        
     def add_translate(self, from_lan, to_lan, content, translate):
         from_language = self.find_lan_by_name(from_lan)
         to_language = self.find_lan_by_name(to_lan)

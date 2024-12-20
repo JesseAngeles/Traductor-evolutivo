@@ -49,7 +49,7 @@ class MainWindow:
         self.entry_to_lan = Text(self.tab1, width=30, height=5)
         self.entry_to_lan.place(x=360, y=95)
         self.entry_to_lan.config(state="disabled")
-        
+
         # Button
         self.button_switch_lan = ttk.Button(self.tab1, text="Switch", command=self.switch_lan)
         self.button_switch_lan.place(x=267, y = 50)
@@ -180,7 +180,12 @@ class MainWindow:
         
         content = self.entry_from_lan.get("1.0", tk.END).strip()  
         
-        translate = self.evolutive_translate.find_translate(from_language, to_language, content)
+        print(len(content.split()))
+        
+        if len(content.split()) > 1:
+            translate = self.evolutive_translate.find_multiple_translate(from_language, to_language, content.split())
+        else:        
+            translate = self.evolutive_translate.find_translate(from_language, to_language, content)
 
         if translate:
             self.set_entry_to_lan(translate)

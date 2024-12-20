@@ -1,9 +1,11 @@
 from Models.category_model import CategoryModel
 from Models.language_model import LanguageModel
+from Models.struct_model import StructModel
 
 from Services.category_service import CategoryService
 from Services.word_service import WordService
 from Services.language_service import LanguageService
+from Services.struct_service import StructService
 
 class Grammar:
     def __init__(self, db):
@@ -11,6 +13,7 @@ class Grammar:
         self.category_service = CategoryService(db)
         self.word_service = WordService(db)
         self.language_service = LanguageService(db)
+        self.struct_service = StructService(db)
         self.categories = self.category_service.get_categories()
 
     def get_categories(self):
@@ -73,6 +76,31 @@ class Grammar:
             for word in self.word_service.get_words():
                 # Iterar sobre los lenguages
                 for lan in word['translates']:
-                    print(from_language['_id'], lan)
-                    if lan == from_language['_id'].to_dict():
-                        print(word['translates'][lan])
+                    if lan == str(from_language['_id']):
+                        if word['translates'][lan] == current_word:
+                            from_list.append(word)
+                            break
+        
+        # Iterar words to
+        for current_word in words_to:
+            # Iterar sobre las palabras para encontrarla
+            for word in self.word_service.get_words():
+                # Iterar sobre los lenguages
+                for lan in word['translates']:
+                    if lan == str(to_language['_id']):
+                        if word['translates'][lan] == current_word:
+                            to_list.append(word)
+                            break
+                        
+        struct_from = list()
+        struct_to = list()
+        
+        for fr in from_list:
+            struct_from.append(fr['categories'][0])
+        for to in to_list:
+            struct_to.append(to['categories'][0])
+        
+        struct = StructModel(from_language, to_language, struct_from, struct_to)
+        
+        self.struct_service.add_struct(struct)
+        print(struct)
